@@ -77,7 +77,9 @@ import collections
 import inspect
 import sys
 
-from src.markers import *
+from error import *
+
+from markers import Extra, Remove, Marker, Exclusive, Inclusive, Optional, Required
 
 if sys.version_info >= (3,):
     long = int
@@ -700,3 +702,55 @@ def _iterate_object(obj):
             if key != '__dict__':
                 yield (key, getattr(obj, key))
     raise StopIteration()
+
+
+
+class Msg(object):
+    """Report a user-friendly message if a schema fails to validate.
+
+    >>> validate = Schema(
+    ...   Msg(['one', 'two', int],
+    ...       'should be one of "one", "two" or an integer'))
+    >>> with raises(MultipleInvalid, 'should be one of "one", "two" or an integer'):
+    ...   validate(['three'])
+
+    Messages are only applied to invalid direct descendants of the schema:
+
+    >>> validate = Schema(Msg([['one', 'two', int]], 'not okay!'))
+    >>> with raises(MultipleInvalid, 'expected int @ data[0][0]'):
+    ...   validate([['three']])
+
+    The type which is thrown can be overridden but needs to be a subclass of Invalid
+
+    >>> with raises(SchemaError, 'Msg can only use subclases of Invalid as custom class'):
+    ...   validate = Schema(Msg([int], 'should be int', cls=KeyError))
+
+    If you do use a subclass of Invalid, that error will be thrown (wrapped in a MultipleInvalid)
+
+    >>> validate = Schema(Msg([['one', 'two', int]], 'not okay!', cls=RangeInvalid))
+    >>> try:
+    ...  validate(['three'])
+    ... except MultipleInvalid as e:
+    ...   assert isinstance(e.errors[0], RangeInvalid)
+    """
+
+    def __init__(self, schema, msg, cls=None):
+        if cls and not issubclass(cls, Invalid):
+            raise SchemaError("Msg can only use subclases of"
+                              " Invalid as custom class")
+        self._schema = schema
+        self.schema = Schema(schema)
+        self.msg = msg
+        self.cls = cls
+
+    def __call__(self, v):
+        try:
+            return self.schema(v)
+        except Invalid as e:
+            if len(e.path) > 1:
+                raise e
+            else:
+                raise (self.cls or Invalid)(self.msg)
+
+    def __repr__(self):
+        return 'Msg(%s, %s, cls=%s)' % (self._schema, self.msg, self.cls)

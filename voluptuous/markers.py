@@ -1,5 +1,5 @@
-from src.schema import *
-from src.error import *
+from error import Invalid, SchemaError
+import schema
 
 
 class Marker(object):
@@ -7,7 +7,7 @@ class Marker(object):
 
     def __init__(self, schema, msg=None):
         self.schema = schema
-        self._schema = Schema(schema)
+        self._schema = schema.Schema(schema)
         self.msg = msg
 
     def __call__(self, v):
@@ -51,8 +51,9 @@ class Optional(Marker):
     {'key2': 'value'}
     """
 
-    def __init__(self, schema, msg=None, default=UNDEFINED):
+    def __init__(self, schema, msg=None, default=schema.UNDEFINED):
         super(Optional, self).__init__(schema, msg=msg)
+        from schema import default_factory
         self.default = default_factory(default)
 
 
@@ -159,9 +160,9 @@ class Required(Marker):
     {'key': []}
     """
 
-    def __init__(self, schema, msg=None, default=UNDEFINED):
+    def __init__(self, schema, msg=None, default=schema.UNDEFINED):
         super(Required, self).__init__(schema, msg=msg)
-        self.default = default_factory(default)
+        self.default = schema.default_factory(default)
 
 
 class Remove(Marker):

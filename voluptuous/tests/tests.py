@@ -1,7 +1,6 @@
 import copy
 from nose.tools import assert_equal, assert_raises
 
-import voluptuous
 from voluptuous import (
     Schema, Required, Extra, Invalid, In, Remove, Literal,
     Url, MultipleInvalid, LiteralInvalid, NotIn, Match,

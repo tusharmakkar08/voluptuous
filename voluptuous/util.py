@@ -1,6 +1,7 @@
 __author__ = 'tusharmakkar08'
 
-from src.schema import *
+from error import LiteralInvalid, TypeInvalid
+from schema import Schema, default_factory
 
 
 def Lower(v):
