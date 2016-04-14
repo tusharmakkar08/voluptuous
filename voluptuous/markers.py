@@ -1,5 +1,21 @@
 from error import Invalid, SchemaError
-import schema
+
+
+class Undefined(object):
+    def __nonzero__(self):
+        return False
+
+    def __repr__(self):
+        return '...'
+
+
+UNDEFINED = Undefined()
+
+
+def default_factory(value):
+    if value is UNDEFINED or callable(value):
+        return value
+    return lambda: value
 
 
 class Marker(object):
@@ -51,9 +67,8 @@ class Optional(Marker):
     {'key2': 'value'}
     """
 
-    def __init__(self, schema, msg=None, default=schema.UNDEFINED):
+    def __init__(self, schema, msg=None, default=UNDEFINED):
         super(Optional, self).__init__(schema, msg=msg)
-        from schema import default_factory
         self.default = default_factory(default)
 
 
@@ -160,9 +175,9 @@ class Required(Marker):
     {'key': []}
     """
 
-    def __init__(self, schema, msg=None, default=schema.UNDEFINED):
+    def __init__(self, schema, msg=None, default=UNDEFINED):
         super(Required, self).__init__(schema, msg=msg)
-        self.default = schema.default_factory(default)
+        self.default = default_factory(default)
 
 
 class Remove(Marker):

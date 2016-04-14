@@ -1,7 +1,8 @@
 __author__ = 'tusharmakkar08'
 
 from error import LiteralInvalid, TypeInvalid
-from schema import Schema, default_factory
+from schema import Schema
+import markers
 
 
 def Lower(v):
@@ -66,7 +67,7 @@ class DefaultTo(object):
     """
 
     def __init__(self, default_value, msg=None):
-        self.default_value = default_factory(default_value)
+        self.default_value = markers.default_factory(default_value)
         self.msg = msg
 
     def __call__(self, v):
@@ -89,7 +90,7 @@ class SetTo(object):
     """
 
     def __init__(self, value):
-        self.value = default_factory(value)
+        self.value = markers.default_factory(value)
 
     def __call__(self, v):
         return self.value()
