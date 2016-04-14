@@ -1,5 +1,10 @@
-from error import Invalid, SchemaError, MultipleInvalid
-import schema_builder
+import sys
+
+from .error import Invalid, SchemaError, MultipleInvalid
+from . import schema_builder
+
+if sys.version_info >= (3,):
+    basestring = str
 
 
 class Undefined(object):

@@ -1,5 +1,5 @@
 from functools import wraps
-import schema_builder
+from . import schema_builder
 
 
 class Error(Exception):

@@ -3,10 +3,9 @@ import inspect
 import re
 import sys
 from contextlib import contextmanager
-from types import ModuleType
 
-import error as er
-import markers
+from . import error as er
+from . import markers
 
 if sys.version_info >= (3,):
     long = int
@@ -183,8 +182,6 @@ class Schema(object):
     def _compile(self, schema):
         if schema is markers.Extra:
             return lambda _, v: v
-        if isinstance(schema, ModuleType):
-            print "hi", dir(schema)
         if isinstance(schema, Object):
             return self._compile_object(schema)
         if isinstance(schema, collections.Mapping):

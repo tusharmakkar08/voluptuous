@@ -3,13 +3,14 @@ import re
 import datetime
 import sys
 
-from schema_builder import Schema, raises
+from .schema_builder import Schema, raises
+from .error import *
 
 if sys.version_info >= (3,):
     import urllib.parse as urlparse
+    basestring = str
 else:
     import urlparse
-from voluptuous.error import *
 
 __author__ = 'tusharmakkar08'
 

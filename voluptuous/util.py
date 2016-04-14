@@ -1,7 +1,8 @@
-from error import LiteralInvalid, TypeInvalid, Invalid
-from schema_builder import Schema, raises
-import markers
-import validators
+from .error import LiteralInvalid, TypeInvalid, Invalid
+from .schema_builder import Schema, raises
+from . import markers
+from . import validators
+
 
 __author__ = 'tusharmakkar08'
 
