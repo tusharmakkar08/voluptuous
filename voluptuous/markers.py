@@ -1,4 +1,4 @@
-from error import Invalid, SchemaError
+from error import Invalid, SchemaError, MultipleInvalid
 import schema_builder
 
 
@@ -48,19 +48,19 @@ class Marker(object):
 class Optional(Marker):
     """Mark a node in the schema as optional, and optionally provide a default
 
-    >>> schema = Schema({Optional('key'): str})
+    >>> schema = schema_builder.Schema({Optional('key'): str})
     >>> schema({})
     {}
-    >>> schema = Schema({Optional('key', default='value'): str})
+    >>> schema = schema_builder.Schema({Optional('key', default='value'): str})
     >>> schema({})
     {'key': 'value'}
-    >>> schema = Schema({Optional('key', default=list): list})
+    >>> schema = schema_builder.Schema({Optional('key', default=list): list})
     >>> schema({})
     {'key': []}
 
     If 'required' flag is set for an entire schema, optional keys aren't required
 
-    >>> schema = Schema({
+    >>> schema = schema_builder.Schema({
     ...    Optional('key'): str,
     ...    'key2': str
     ... }, required=True)
@@ -78,19 +78,19 @@ class Exclusive(Optional):
 
     Exclusive keys inherited from Optional:
 
-    >>> schema = Schema({Exclusive('alpha', 'angles'): int, Exclusive('beta', 'angles'): int})
+    >>> schema = schema_builder.Schema({Exclusive('alpha', 'angles'): int, Exclusive('beta', 'angles'): int})
     >>> schema({'alpha': 30})
     {'alpha': 30}
 
     Keys inside a same group of exclusion cannot be together, it only makes sense for dictionaries:
 
-    >>> with raises(MultipleInvalid, "two or more values in the same group of exclusion 'angles' @ data[<angles>]"):
+    >>> with schema_builder.raises(MultipleInvalid, "two or more values in the same group of exclusion 'angles' @ data[<angles>]"):
     ...   schema({'alpha': 30, 'beta': 45})
 
     For example, API can provides multiple types of authentication, but only one works in the same time:
 
     >>> msg = 'Please, use only one type of authentication at the same time.'
-    >>> schema = Schema({
+    >>> schema = schema_builder.Schema({
     ... Exclusive('classic', 'auth', msg=msg):{
     ...     Required('email'): basestring,
     ...     Required('password'): basestring
@@ -104,7 +104,7 @@ class Exclusive(Optional):
     ...     }
     ... })
 
-    >>> with raises(MultipleInvalid, "Please, use only one type of authentication at the same time. @ data[<auth>]"):
+    >>> with schema_builder.raises(MultipleInvalid, "Please, use only one type of authentication at the same time. @ data[<auth>]"):
     ...     schema({'classic': {'email': 'foo@example.com', 'password': 'bar'},
     ...             'social': {'social_network': 'barfoo', 'token': 'tEMp'}})
     """
@@ -119,7 +119,7 @@ class Inclusive(Optional):
 
     Exclusive keys inherited from Optional:
 
-    >>> schema = Schema({
+    >>> schema = schema_builder.Schema({
     ...     Inclusive('filename', 'file'): str,
     ...     Inclusive('mimetype', 'file'): str
     ... })
@@ -129,7 +129,7 @@ class Inclusive(Optional):
 
     Keys inside a same group of inclusive must exist together, it only makes sense for dictionaries:
 
-    >>> with raises(MultipleInvalid, "some but not all values in the same group of inclusion 'file' @ data[<file>]"):
+    >>> with schema_builder.raises(MultipleInvalid, "some but not all values in the same group of inclusion 'file' @ data[<file>]"):
     ...     schema({'filename': 'dog.jpg'})
 
     If none of the keys in the group are present, it is accepted:
@@ -140,15 +140,15 @@ class Inclusive(Optional):
     For example, API can return 'height' and 'width' together, but not separately.
 
     >>> msg = "Height and width must exist together"
-    >>> schema = Schema({
+    >>> schema = schema_builder.Schema({
     ...     Inclusive('height', 'size', msg=msg): int,
     ...     Inclusive('width', 'size', msg=msg): int
     ... })
 
-    >>> with raises(MultipleInvalid, msg + " @ data[<size>]"):
+    >>> with schema_builder.raises(MultipleInvalid, msg + " @ data[<size>]"):
     ...     schema({'height': 100})
 
-    >>> with raises(MultipleInvalid, msg + " @ data[<size>]"):
+    >>> with schema_builder.raises(MultipleInvalid, msg + " @ data[<size>]"):
     ...     schema({'width': 100})
 
     >>> data = {'height': 100, 'width': 100}
@@ -164,14 +164,14 @@ class Inclusive(Optional):
 class Required(Marker):
     """Mark a node in the schema as being required, and optionally provide a default value.
 
-    >>> schema = Schema({Required('key'): str})
-    >>> with raises(MultipleInvalid, "required key not provided @ data['key']"):
+    >>> schema = schema_builder.Schema({Required('key'): str})
+    >>> with schema_builder.raises(MultipleInvalid, "required key not provided @ data['key']"):
     ...   schema({})
 
-    >>> schema = Schema({Required('key', default='value'): str})
+    >>> schema = schema_builder.Schema({Required('key', default='value'): str})
     >>> schema({})
     {'key': 'value'}
-    >>> schema = Schema({Required('key', default=list): list})
+    >>> schema = schema_builder.Schema({Required('key', default=list): list})
     >>> schema({})
     {'key': []}
     """
@@ -186,12 +186,12 @@ class Remove(Marker):
     output. Keys that fail validation will not raise ``Invalid``. Instead, these
     keys will be treated as extras.
 
-    >>> schema = Schema({str: int, Remove(int): str})
-    >>> with raises(MultipleInvalid, "extra keys not allowed @ data[1]"):
+    >>> schema = schema_builder.Schema({str: int, Remove(int): str})
+    >>> with schema_builder.raises(MultipleInvalid, "extra keys not allowed @ data[1]"):
     ...    schema({'keep': 1, 1: 1.0})
     >>> schema({1: 'red', 'red': 1, 2: 'green'})
     {'red': 1}
-    >>> schema = Schema([int, Remove(float), Extra])
+    >>> schema = schema_builder.Schema([int, Remove(float), Extra])
     >>> schema([1, 2, 3, 4.0, 5, 6.0, '7'])
     [1, 2, 3, 5, '7']
     """

@@ -1,8 +1,9 @@
 __author__ = 'tusharmakkar08'
 
-from error import LiteralInvalid, TypeInvalid
-from schema_builder import Schema
+from error import LiteralInvalid, TypeInvalid, Invalid
+from schema_builder import Schema, raises
 import markers
+import validators
 
 
 def Lower(v):
@@ -82,7 +83,7 @@ class DefaultTo(object):
 class SetTo(object):
     """Set a value, ignoring any previous value.
 
-    >>> s = Schema(Any(int, SetTo(42)))
+    >>> s = Schema(validators.Any(int, SetTo(42)))
     >>> s(2)
     2
     >>> s("foo")

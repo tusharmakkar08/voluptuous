@@ -1,5 +1,5 @@
 from functools import wraps
-
+import schema_builder
 
 class Error(Exception):
     """Base validation exception."""
@@ -188,20 +188,20 @@ def message(default=None, cls=None):
         ... def isint(v):
         ...   return int(v)
 
-        >>> validate = Schema(isint())
-        >>> with raises(MultipleInvalid, 'not an integer'):
+        >>> validate = schema_builder.Schema(isint())
+        >>> with schema_builder.raises(MultipleInvalid, 'not an integer'):
         ...   validate('a')
 
     The message can be overridden on a per validator basis:
 
-        >>> validate = Schema(isint('bad'))
-        >>> with raises(MultipleInvalid, 'bad'):
+        >>> validate = schema_builder.Schema(isint('bad'))
+        >>> with schema_builder.raises(MultipleInvalid, 'bad'):
         ...   validate('a')
 
     The class thrown too:
 
         >>> class IntegerInvalid(Invalid): pass
-        >>> validate = Schema(isint('bad', clsoverride=IntegerInvalid))
+        >>> validate = schema_builder.Schema(isint('bad', clsoverride=IntegerInvalid))
         >>> try:
         ...  validate('a')
         ... except MultipleInvalid as e:

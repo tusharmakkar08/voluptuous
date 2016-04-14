@@ -5,7 +5,7 @@ import re
 import datetime
 import sys
 
-from schema_builder import Schema
+from schema_builder import Schema, raises
 
 if sys.version_info >= (3,):
     import urllib.parse as urlparse
@@ -353,7 +353,7 @@ def Url(v):
 def IsFile(v):
     """Verify the file exists.
 
-    >>> os.path.basename(IsFile()(__file__)).startswith('voluptuous.py')
+    >>> os.path.basename(IsFile()(__file__)).startswith('validators.py')
     True
     >>> with raises(FileInvalid, 'not a file'):
     ...   IsFile()("random_filename_goes_here.py")
@@ -377,7 +377,7 @@ def IsDir(v):
 def PathExists(v):
     """Verify the path exists, regardless of its type.
 
-    >>> os.path.basename(PathExists()(__file__)).startswith('voluptuous.py')
+    >>> os.path.basename(PathExists()(__file__)).startswith('validators.py')
     True
     >>> with raises(Invalid, 'path does not exist'):
     ...   PathExists()("random_filename_goes_here.py")

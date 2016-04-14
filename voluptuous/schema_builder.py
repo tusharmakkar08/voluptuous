@@ -1,3 +1,24 @@
+import collections
+import inspect
+import re
+import sys
+from contextlib import contextmanager
+from types import ModuleType
+
+import error as er
+import markers
+
+if sys.version_info >= (3,):
+    long = int
+    unicode = str
+    basestring = str
+    ifilter = filter
+    iteritems = lambda d: d.items()
+else:
+    from itertools import ifilter
+
+    iteritems = lambda d: d.iteritems()
+
 """Schema validation for Python data structures.
 
 Given eg. a nested data structure like this:
@@ -73,27 +94,6 @@ Validate like so:
     ...                  'Users': {'snmp_community': 'monkey'}}}}
     True
 """
-import collections
-import inspect
-import re
-import sys
-from contextlib import contextmanager
-from types import ModuleType
-
-import error as er
-import markers
-
-if sys.version_info >= (3,):
-    long = int
-    unicode = str
-    basestring = str
-    ifilter = filter
-    iteritems = lambda d: d.items()
-else:
-    from itertools import ifilter
-
-    iteritems = lambda d: d.iteritems()
-
 
 # options for extra keys
 PREVENT_EXTRA = 0  # any extra key not in schema will raise an error
@@ -327,7 +327,7 @@ class Schema(object):
             ...         self.three = three
             ...
             >>> validate = Schema(Object({'one': 'two', 'three': 'four'}, cls=Structure))
-            >>> with raises(MultipleInvalid, "not a valid value for object value @ data['one']"):
+            >>> with raises(er.MultipleInvalid, "not a valid value for object value @ data['one']"):
             ...   validate(Structure(one='three'))
 
         """
@@ -354,18 +354,18 @@ class Schema(object):
         A dictionary schema will only validate a dictionary:
 
             >>> validate = Schema({})
-            >>> with raises(MultipleInvalid, 'expected a dictionary'):
+            >>> with raises(er.MultipleInvalid, 'expected a dictionary'):
             ...   validate([])
 
         An invalid dictionary value:
 
             >>> validate = Schema({'one': 'two', 'three': 'four'})
-            >>> with raises(MultipleInvalid, "not a valid value for dictionary value @ data['one']"):
+            >>> with raises(er.MultipleInvalid, "not a valid value for dictionary value @ data['one']"):
             ...   validate({'one': 'three'})
 
         An invalid key:
 
-            >>> with raises(MultipleInvalid, "extra keys not allowed @ data['two']"):
+            >>> with raises(er.MultipleInvalid, "extra keys not allowed @ data['two']"):
             ...   validate({'two': 'three'})
 
 
@@ -382,11 +382,11 @@ class Schema(object):
         purely to validate that the corresponding value is of that type. It
         will not Coerce the value:
 
-            >>> with raises(MultipleInvalid, "extra keys not allowed @ data['10']"):
+            >>> with raises(er.MultipleInvalid, "extra keys not allowed @ data['10']"):
             ...   validate({'10': 'twenty'})
 
         Wrap them in the Coerce() function to achieve this:
-
+            >>> from voluptuous import Coerce
             >>> validate = Schema({'one': 'two', 'three': 'four',
             ...                    Coerce(int): str})
             >>> validate({'10': 'twenty'})
@@ -394,8 +394,8 @@ class Schema(object):
 
         Custom message for required key
 
-            >>> validate = Schema({Required('one', 'required'): 'two'})
-            >>> with raises(MultipleInvalid, "required @ data['one']"):
+            >>> validate = Schema({markers.Required('one', 'required'): 'two'})
+            >>> with raises(er.MultipleInvalid, "required @ data['one']"):
             ...   validate({})
 
         (This is to avoid unexpected surprises.)
@@ -415,7 +415,7 @@ class Schema(object):
         ...             'intfield': 'one'
         ...         }
         ...     })
-        ... except MultipleInvalid as e:
+        ... except er.MultipleInvalid as e:
         ...     print(sorted(str(i) for i in e.errors)) # doctest: +NORMALIZE_WHITESPACE
         ["expected int for dictionary value @ data['adict']['intfield']",
          "expected str for dictionary value @ data['adict']['strfield']"]
@@ -482,7 +482,7 @@ class Schema(object):
         >>> validator = Schema(['one', 'two', int])
         >>> validator(['one'])
         ['one']
-        >>> with raises(MultipleInvalid, 'expected int @ data[0]'):
+        >>> with raises(er.MultipleInvalid, 'expected int @ data[0]'):
         ...   validator([3.5])
         >>> validator([1])
         [1]
@@ -531,7 +531,7 @@ class Schema(object):
         >>> validator = Schema(('one', 'two', int))
         >>> validator(('one',))
         ('one',)
-        >>> with raises(MultipleInvalid, 'expected int @ data[0]'):
+        >>> with raises(er.MultipleInvalid, 'expected int @ data[0]'):
         ...   validator((3.5,))
         >>> validator((1,))
         (1,)
@@ -546,7 +546,7 @@ class Schema(object):
         >>> validator = Schema(['one', 'two', int])
         >>> validator(['one'])
         ['one']
-        >>> with raises(MultipleInvalid, 'expected int @ data[0]'):
+        >>> with raises(er.MultipleInvalid, 'expected int @ data[0]'):
         ...   validator([3.5])
         >>> validator([1])
         [1]
@@ -584,7 +584,7 @@ def _compile_scalar(schema):
 
     >>> _compile_scalar(int)([], 1)
     1
-    >>> with raises(Invalid, 'expected float'):
+    >>> with raises(er.Invalid, 'expected float'):
     ...   _compile_scalar(float)([], '1')
 
     Callables have
@@ -593,7 +593,7 @@ def _compile_scalar(schema):
 
     As a convenience, ValueError's are trapped:
 
-    >>> with raises(Invalid, 'not a valid value'):
+    >>> with raises(er.Invalid, 'not a valid value'):
     ...   _compile_scalar(lambda v: float(v))([], 'a')
     """
     if isinstance(schema, type):
@@ -708,27 +708,27 @@ class Msg(object):
     >>> validate = Schema(
     ...   Msg(['one', 'two', int],
     ...       'should be one of "one", "two" or an integer'))
-    >>> with raises(MultipleInvalid, 'should be one of "one", "two" or an integer'):
+    >>> with raises(er.MultipleInvalid, 'should be one of "one", "two" or an integer'):
     ...   validate(['three'])
 
     Messages are only applied to invalid direct descendants of the schema:
 
     >>> validate = Schema(Msg([['one', 'two', int]], 'not okay!'))
-    >>> with raises(MultipleInvalid, 'expected int @ data[0][0]'):
+    >>> with raises(er.MultipleInvalid, 'expected int @ data[0][0]'):
     ...   validate([['three']])
 
     The type which is thrown can be overridden but needs to be a subclass of Invalid
 
-    >>> with raises(SchemaError, 'Msg can only use subclases of Invalid as custom class'):
+    >>> with raises(er.SchemaError, 'Msg can only use subclases of Invalid as custom class'):
     ...   validate = Schema(Msg([int], 'should be int', cls=KeyError))
 
     If you do use a subclass of Invalid, that error will be thrown (wrapped in a MultipleInvalid)
 
-    >>> validate = Schema(Msg([['one', 'two', int]], 'not okay!', cls=RangeInvalid))
+    >>> validate = Schema(Msg([['one', 'two', int]], 'not okay!', cls=er.RangeInvalid))
     >>> try:
     ...  validate(['three'])
-    ... except MultipleInvalid as e:
-    ...   assert isinstance(e.errors[0], RangeInvalid)
+    ... except er.MultipleInvalid as e:
+    ...   assert isinstance(e.errors[0], er.RangeInvalid)
     """
 
     def __init__(self, schema, msg, cls=None):
