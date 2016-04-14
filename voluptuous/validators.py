@@ -5,7 +5,7 @@ import re
 import datetime
 import sys
 
-from schema import Schema
+from schema_builder import Schema
 
 if sys.version_info >= (3,):
     import urllib.parse as urlparse

@@ -1,4 +1,5 @@
 from error import Invalid, SchemaError
+import schema_builder
 
 
 class Undefined(object):
@@ -21,9 +22,9 @@ def default_factory(value):
 class Marker(object):
     """Mark nodes for special treatment."""
 
-    def __init__(self, schema, msg=None):
-        self.schema = schema
-        self._schema = schema.Schema(schema)
+    def __init__(self, schema_, msg=None):
+        self.schema = schema_
+        self._schema = schema_builder.Schema(schema_)
         self.msg = msg
 
     def __call__(self, v):

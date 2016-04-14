@@ -1,7 +1,7 @@
 __author__ = 'tusharmakkar08'
 
 from error import LiteralInvalid, TypeInvalid
-from schema import Schema
+from schema_builder import Schema
 import markers
 
 

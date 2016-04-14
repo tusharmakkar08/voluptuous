@@ -1,6 +1,6 @@
 __author__ = 'tusharmakkar08'
 
-from schema import *
+from schema_builder import *
 from markers import *
 from validators import *
 from util import *

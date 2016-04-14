@@ -4,7 +4,7 @@ from nose.tools import assert_equal, assert_raises
 from voluptuous import (
     Schema, Required, Extra, Invalid, In, Remove, Literal,
     Url, MultipleInvalid, LiteralInvalid, NotIn, Match,
-    Replace, Range, Coerce, All, Any, Length, FqdnUrl
+    Replace, Range, Coerce, All, Any, Length, FqdnUrl, ALLOW_EXTRA, PREVENT_EXTRA
 )
 
 
@@ -36,8 +36,8 @@ def test_iterate_candidates():
         Extra: object,
     }
     # toaster should be first.
-    assert_equal(voluptuous._iterate_mapping_candidates(schema)[0][0],
-                 'toaster')
+    from voluptuous.schema_builder import _iterate_mapping_candidates
+    assert_equal(_iterate_mapping_candidates(schema)[0][0], 'toaster')
 
 
 def test_in():
@@ -271,12 +271,12 @@ def test_schema_extend_overrides():
     """Verify that Schema.extend can override required/extra parameters."""
 
     base = Schema({'a': int}, required=True)
-    extended = base.extend({'b': str}, required=False, extra=voluptuous.ALLOW_EXTRA)
+    extended = base.extend({'b': str}, required=False, extra=ALLOW_EXTRA)
 
     assert base.required == True
-    assert base.extra == voluptuous.PREVENT_EXTRA
+    assert base.extra == PREVENT_EXTRA
     assert extended.required == False
-    assert extended.extra == voluptuous.ALLOW_EXTRA
+    assert extended.extra == ALLOW_EXTRA
 
 
 def test_repr():
