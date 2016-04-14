@@ -1,5 +1,3 @@
-__author__ = 'tusharmakkar08'
-
 import os
 import re
 import datetime
@@ -12,6 +10,8 @@ if sys.version_info >= (3,):
 else:
     import urlparse
 from voluptuous.error import *
+
+__author__ = 'tusharmakkar08'
 
 
 def truth(f):

@@ -1,9 +1,9 @@
-__author__ = 'tusharmakkar08'
-
 from error import LiteralInvalid, TypeInvalid, Invalid
 from schema_builder import Schema, raises
 import markers
 import validators
+
+__author__ = 'tusharmakkar08'
 
 
 def Lower(v):

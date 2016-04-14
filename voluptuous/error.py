@@ -1,6 +1,7 @@
 from functools import wraps
 import schema_builder
 
+
 class Error(Exception):
     """Base validation exception."""
 

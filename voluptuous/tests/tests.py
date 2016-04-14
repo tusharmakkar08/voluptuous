@@ -273,9 +273,9 @@ def test_schema_extend_overrides():
     base = Schema({'a': int}, required=True)
     extended = base.extend({'b': str}, required=False, extra=ALLOW_EXTRA)
 
-    assert base.required == True
+    assert base.required is True
     assert base.extra == PREVENT_EXTRA
-    assert extended.required == False
+    assert extended.required is False
     assert extended.extra == ALLOW_EXTRA
 
 
@@ -284,7 +284,7 @@ def test_repr():
     match = Match('a pattern', msg='message')
     replace = Replace('you', 'I', msg='you and I')
     range_ = Range(min=0, max=42, min_included=False,
-                  max_included=False, msg='number not in range')
+                   max_included=False, msg='number not in range')
     coerce_ = Coerce(int, msg="moo")
     all_ = All('10', Coerce(int), msg='all msg')
 
@@ -292,8 +292,7 @@ def test_repr():
     assert_equal(repr(replace), "Replace('you', 'I', msg='you and I')")
     assert_equal(
         repr(range_),
-        "Range(min=0, max=42, min_included=False, " \
-        "max_included=False, msg='number not in range')"
+        "Range(min=0, max=42, min_included=False, max_included=False, msg='number not in range')"
     )
     assert_equal(repr(coerce_), "Coerce(int, msg='moo')")
     assert_equal(repr(all_), "All('10', Coerce(int, msg=None), msg='all msg')")
