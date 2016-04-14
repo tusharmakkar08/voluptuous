@@ -1,14 +1,14 @@
-from __future__ import absolute_import
-
 import sys
 
-if sys.version_info >= (3,):
-    from .error import Invalid, SchemaError, MultipleInvalid
-    from . import schema_builder
-    basestring = str
-else:
+try:
     from error import Invalid, SchemaError, MultipleInvalid
     import schema_builder
+except ImportError:
+    from .error import Invalid, SchemaError, MultipleInvalid
+    from . import schema_builder
+
+if sys.version_info >= (3,):
+    basestring = str
 
 
 class Undefined(object):

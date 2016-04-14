@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-
 from functools import wraps
-import sys
 
-if sys.version_info >= (3,):
-    from . import schema_builder
-else:
+try:
     import schema_builder
+except ImportError:
+    from . import schema_builder
 
 
 class Error(Exception):

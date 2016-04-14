@@ -1,22 +1,23 @@
-from __future__ import absolute_import
-
 import collections
 import inspect
 import re
 import sys
 from contextlib import contextmanager
 
-if sys.version_info >= (3,):
+try:
+    import error as er
+    import markers
+except ImportError:
     from . import error as er
     from . import markers
+
+if sys.version_info >= (3,):
     long = int
     unicode = str
     basestring = str
     ifilter = filter
     iteritems = lambda d: d.items()
 else:
-    import error as er
-    import markers
     from itertools import ifilter
     iteritems = lambda d: d.iteritems()
 
