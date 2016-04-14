@@ -1,8 +1,17 @@
-from .error import LiteralInvalid, TypeInvalid, Invalid
-from .schema_builder import Schema, raises
-from . import markers
-from . import validators
+from __future__ import absolute_import
+import sys
 
+
+if sys.version_info >= (3,):
+    from .error import LiteralInvalid, TypeInvalid, Invalid
+    from .schema_builder import Schema, raises
+    from . import markers
+    from . import validators
+else:
+    from error import LiteralInvalid, TypeInvalid, Invalid
+    from schema_builder import Schema, raises
+    import markers
+    import validators
 
 __author__ = 'tusharmakkar08'
 

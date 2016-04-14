@@ -1,15 +1,18 @@
+from __future__ import absolute_import
+
 import os
 import re
 import datetime
 import sys
 
-from .schema_builder import Schema, raises
-from .error import *
-
 if sys.version_info >= (3,):
+    from .schema_builder import Schema, raises
+    from .error import *
     import urllib.parse as urlparse
     basestring = str
 else:
+    from schema_builder import Schema, raises
+    from error import *
     import urlparse
 
 __author__ = 'tusharmakkar08'

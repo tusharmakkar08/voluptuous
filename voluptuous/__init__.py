@@ -1,8 +1,16 @@
-__author__ = 'tusharmakkar08'
+from __future__ import absolute_import
+import sys
 
-from .schema_builder import *
-from .markers import *
-from .validators import *
-from .util import *
+if sys.version_info >= (3,):
+    from .schema_builder import *
+    from .markers import *
+    from .validators import *
+    from .util import *
+else:
+    from schema_builder import *
+    from markers import *
+    from validators import *
+    from util import *
 
 __version__ = '0.8.11'
+__author__ = 'tusharmakkar08'
