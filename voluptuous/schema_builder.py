@@ -16,10 +16,12 @@ if sys.version_info >= (3,):
     basestring = str
     ifilter = filter
 
+
     def iteritems(d):
         return d.items()
 else:
     from itertools import ifilter
+
 
     def iteritems(d):
         return d.iteritems()
@@ -437,67 +439,17 @@ class Schema(object):
         base_validate = self._compile_mapping(
             schema, invalid_msg='dictionary value')
 
-        groups_of_exclusion = {}
-        groups_of_inclusion = {}
-        groups_of_atleast_one = {}
+        schema_validation = SchemaValidator()
         for node in schema:
-            if isinstance(node, Exclusive):
-                g = groups_of_exclusion.setdefault(node.group_of_exclusion, [])
-                g.append(node)
-            elif isinstance(node, Inclusive):
-                g = groups_of_inclusion.setdefault(node.group_of_inclusion, [])
-                g.append(node)
-            elif isinstance(node, AtleastOne):
-                g = groups_of_atleast_one.setdefault(node.group_of_atleast_one, [])
+            if isinstance(node, SchemaValidator):
+                g = schema_validation.add_grouped_elements((node, type(node)))
                 g.append(node)
 
         def validate_dict(path, data):
             if not isinstance(data, dict):
                 raise er.DictInvalid('expected a dictionary', path)
 
-            errors = []
-            for label, group in groups_of_exclusion.items():
-                exists = False
-                for exclusive in group:
-                    if exclusive.schema in data:
-                        if exists:
-                            msg = exclusive.msg if hasattr(exclusive, 'msg') and exclusive.msg else \
-                                "two or more values in the same group of exclusion '%s'" % label
-                            next_path = path + [VirtualPathComponent(label)]
-                            errors.append(er.ExclusiveInvalid(msg, next_path))
-                            break
-                        exists = True
-
-            if errors:
-                raise er.MultipleInvalid(errors)
-
-            for label, group in groups_of_inclusion.items():
-                included = [node.schema in data for node in group]
-                if any(included) and not all(included):
-                    msg = "some but not all values in the same group of inclusion '%s'" % label
-                    for g in group:
-                        if hasattr(g, 'msg') and g.msg:
-                            msg = g.msg
-                            break
-                    next_path = path + [VirtualPathComponent(label)]
-                    errors.append(er.InclusiveInvalid(msg, next_path))
-                    break
-
-            if errors:
-                raise er.MultipleInvalid(errors)
-
-            for label, group in groups_of_atleast_one.items():
-                included = any([node.schema in data for node in group])
-                if not included:
-                    msg = "No value is present in the same group of inclusion '%s'" % label
-                    for g in group:
-                        if hasattr(g, 'msg') and g.msg:
-                            msg = g.msg
-                            break
-                    next_path = path + [VirtualPathComponent(label)]
-                    errors.append(er.InclusiveInvalid(msg, next_path))
-                    break
-
+            errors = schema_validation.validation_logic(path, data)
             if errors:
                 raise er.MultipleInvalid(errors)
 
@@ -858,6 +810,21 @@ class Optional(Marker):
         self.default = default_factory(default)
 
 
+class SchemaValidator(Optional):
+    def __init__(self):
+        self.grouped_elements = {}
+
+    def get_grouped_elements(self):
+        return self.grouped_elements
+
+    def add_grouped_elements(self, grouped_element):
+        g = self.grouped_elements.setdefault(grouped_element, [])
+        return g
+
+    def validation_logic(self, path, data):
+        pass
+
+
 class Exclusive(Optional):
     """Mark a node in the schema as exclusive.
 
@@ -893,13 +860,26 @@ class Exclusive(Optional):
     ...     schema({'classic': {'email': 'foo@example.com', 'password': 'bar'},
     ...             'social': {'social_network': 'barfoo', 'token': 'tEMp'}})
     """
-
-    def __init__(self, schema, group_of_exclusion, msg=None):
+    def __init__(self, schema, msg=None):
         super(Exclusive, self).__init__(schema, msg=msg)
-        self.group_of_exclusion = group_of_exclusion
+
+    def validation_logic(self, path, data):
+        errors = []
+        for label, group in self.grouped_elements.items():
+            exists = False
+            for exclusive in group:
+                if exclusive.schema in data:
+                    if exists:
+                        msg = exclusive.msg if hasattr(exclusive, 'msg') and exclusive.msg else \
+                            "two or more values in the same group of exclusion '%s'" % label
+                        next_path = path + [VirtualPathComponent(label)]
+                        errors.append(er.ExclusiveInvalid(msg, next_path))
+                        break
+                    exists = True
+        return errors
 
 
-class Inclusive(Optional):
+class Inclusive(SchemaValidator, Optional):
     """ Mark a node in the schema as inclusive.
 
     Exclusive keys inherited from Optional:
@@ -940,33 +920,26 @@ class Inclusive(Optional):
     >>> data == schema(data)
     True
     """
-
-    def __init__(self, schema, group_of_inclusion, msg=None):
+    def __init__(self, schema, msg=None):
         super(Inclusive, self).__init__(schema, msg=msg)
-        self.group_of_inclusion = group_of_inclusion
+
+    def validation_logic(self, path, data):
+        errors = []
+        for label, group in self.grouped_elements.items():
+            included = [node.schema in data for node in group]
+            if any(included) and not all(included):
+                msg = "some but not all values in the same group of inclusion '%s'" % label
+                for g in group:
+                    if hasattr(g, 'msg') and g.msg:
+                        msg = g.msg
+                        break
+                next_path = path + [VirtualPathComponent(label)]
+                errors.append(er.InclusiveInvalid(msg, next_path))
+                break
+        return errors
 
 
-class Required(Marker):
-    """Mark a node in the schema as being required, and optionally provide a default value.
-
-    >>> schema = Schema({Required('key'): str})
-    >>> with raises(er.MultipleInvalid, "required key not provided @ data['key']"):
-    ...   schema({})
-
-    >>> schema = Schema({Required('key', default='value'): str})
-    >>> schema({})
-    {'key': 'value'}
-    >>> schema = Schema({Required('key', default=list): list})
-    >>> schema({})
-    {'key': []}
-    """
-
-    def __init__(self, schema, msg=None, default=UNDEFINED):
-        super(Required, self).__init__(schema, msg=msg)
-        self.default = default_factory(default)
-
-
-class AtleastOne(Optional):
+class AtleastOne(SchemaValidator, Optional):
     """ Mark a node in the schema as inclusive.
 
     Exclusive keys inherited from Optional:
@@ -1000,10 +973,43 @@ class AtleastOne(Optional):
     >>> with raises(er.MultipleInvalid, "No value is present in the same group of inclusion 'group2' @ data[<group2>]"):
     ...   schema(data)
     """
-
-    def __init__(self, schema, group_of_atleast_one, msg=None):
+    def __init__(self, schema, msg=None):
         super(AtleastOne, self).__init__(schema, msg=msg)
-        self.group_of_atleast_one = group_of_atleast_one
+
+    def validation_logic(self, path, data):
+        errors = []
+        for label, group in self.grouped_elements.items():
+            included = any([node.schema in data for node in group])
+            if not included:
+                msg = "No value is present in the same group of inclusion '%s'" % label
+                for g in group:
+                    if hasattr(g, 'msg') and g.msg:
+                        msg = g.msg
+                        break
+                next_path = path + [VirtualPathComponent(label)]
+                errors.append(er.AtleastOneInvalid(msg, next_path))
+                break
+        return errors
+
+
+class Required(Marker):
+    """Mark a node in the schema as being required, and optionally provide a default value.
+
+    >>> schema = Schema({Required('key'): str})
+    >>> with raises(er.MultipleInvalid, "required key not provided @ data['key']"):
+    ...   schema({})
+
+    >>> schema = Schema({Required('key', default='value'): str})
+    >>> schema({})
+    {'key': 'value'}
+    >>> schema = Schema({Required('key', default=list): list})
+    >>> schema({})
+    {'key': []}
+    """
+
+    def __init__(self, schema, msg=None, default=UNDEFINED):
+        super(Required, self).__init__(schema, msg=msg)
+        self.default = default_factory(default)
 
 
 class Remove(Marker):

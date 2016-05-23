@@ -89,6 +89,10 @@ class InclusiveInvalid(Invalid):
     """Not all values found in inclusion group."""
 
 
+class AtleastOneInvalid(Invalid):
+    """Atleast one entry isn't there in atleast one group."""
+
+
 class SequenceTypeInvalid(Invalid):
     """The type found is not a sequence type."""
 
